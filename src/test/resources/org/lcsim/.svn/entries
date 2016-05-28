@@ -1,0 +1,37 @@
+10
+
+dir
+3627
+svn://svn.freehep.org/lcdet/projects/lcsim/trunk/detector-framework/src/test/resources/org/lcsim
+svn://svn.freehep.org/lcdet
+
+
+
+2015-05-27T20:18:40.355718Z
+3627
+jeremym@slac.stanford.edu
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+398c234a-ab52-446f-866f-31fffb5e1e29
+
+detector
+dir
+
+geometry
+dir
+
+material
+dir
+
