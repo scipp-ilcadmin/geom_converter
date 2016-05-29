@@ -1,0 +1,159 @@
+July 2015 SiDloi3 simulation geometry update changelog
+by Christopher Milke, UC Santa Cruz
+
+
+#####################################
+#MODIFICATIONS TO GEOMCONVERTER CODE#
+#####################################
+
+all files changed are located in:
+lcsim/detector-framework/src/main/java/org/lcsim/geometry/compact/converter/lcdd/
+
+
+ForwardDetector.java:
+    This is the file that determines the BeamCal's geometry, as well as the
+    geometry of the polyethylene mask in front of the BeamCal.
+    
+    It was modified in order to allow the BeamCal and its mask to be alligned
+    to the outgoing beampipe.
+    
+    The rotation itself was straightforward, requiring only a few lines of
+    code towards the end to A) rotate the BeamCal by half the crossing angle
+    (0.014 radians, so the BeamCal was rotated by 0.007 radians), and B) 
+    shift the BeamCal in x by [zposition*tan(crossing_angle/2)]. The
+    shift in x was neccessary because the rotation is about the BeamCal's
+    local center, not the global origin. 
+
+    The catch was the two holes in the BeamCal which needed to be subtracted
+    from the volume for the beampipes. This subtraction is done not just in
+    every layer, but in every slice of material in every layer. The result is
+    effectively the same body of code in three locations to perform the
+    rotated subtraction properly (one for the main beamcal, one for each
+    layer, and one for each slice). 
+
+
+util/PhysVol.java:
+    This is the class which is actually interpreted by the program as
+    belonging to the geometry. When a geometric object in the code is generated, the
+    last step is to create a PhysVol object with the geometric object, which
+    is then added to the "mother volume" PhysVol object.
+
+    This was modified merely to add two convenience functions. There was
+    already a function (setZ) built into it that allowed one to easily set the
+    z-position of a PhysVol object. I simply added two more that did the same
+    thing for x and y. The function for x (setX) was used for the shift
+    mentioned in the ForwardDetector.java, and the setY function was just for
+    completeness.
+
+
+PolyconeSupport.java:
+    This is the class which converts, among many other things, the large
+    support tube which encompasses the BeamCal and mask.
+
+    It was modified to allow it to be alligned to the outgoing beampipe.
+    Oddly, while the BeamCal requires both a rotation and x position be set,
+    the PolyconeSupport only requires rotation, as its axis of rotation
+    appears to be the origin.
+
+    While the functionality for alignment is still present in the code, later discussion
+    revealed that the support tube should remain alligned to the z-axis, so
+    the functionality is not currently being used.
+
+
+CylindricalEndcapCalorimeter.java:
+    This is the class which converts the LumiCal.
+
+    It was modified to allow alignment to the outgoing beampipe. Like the
+    BeamCal, it requires a rotation and shift-in-x parameter to be aligned
+    correctly. However, the hole in the center of the LumiCal is generated
+    through a different method than the BeamCal holes, which means it does not
+    require any special attention.
+
+
+
+
+
+
+##############################
+#MODIFICATIONS TO COMPACT.XML#
+##############################
+All numbers in units of mm
+
+
+Changes made in order to comply with Tom Markiewicz's engineering excel file:
+
+    EcalBarrel inner radius: 1265 -> 1270
+    EcalEndcap inner radius: 200 -> 216
+    EcalEndcap outer radius: 1294.1 -> 1250
+
+    HcalBarrel inner radius: 1419 -> 1410
+    HcalBarrel z from origin to edge: 3018 -> 2940
+
+    HcalEndcap inner radius: 200 -> 216
+    HcalEndcap outer radius: 1458.7 -> 1402
+    HcalEndcap z-min: 1805 -> 1820
+
+    MuonEndcap zmin: 3028 -> 3030
+    MuonEndcap rmin: 200 -> 211
+
+    LumiCal zmin: 1680 -> 1557
+
+    BeamCal outer_r: 129.6 -> 159
+    BeamCal inner_z: 2950 -> 3265
+    BeamCal slice material Tungsten density 24 thickness: 2.71 -> 2.5
+    
+    BeamCal support tube rmin: 155 -> 194
+    BeamCal support tube rmax: 195 -> 211
+    BeamCal support tube zmin: 1820 -> 1700
+    BeamCal support tube zmax: 3235 -> 6773
+
+    Forward & Backward M1 support:
+        initial: rmin 80 -> 70, rmax 155 -> 100, z 1820 -> 3135
+        final:   rmin 137.8 -> 169, rmax 155 -> 194, z 3135 -> 3125
+
+    ForwardLowZ:
+        outer_r: 123.9 -> 159
+        inner_z: 2820 -> 3135
+
+
+
+changes made to allign the BeamCal, mask, and LumiCal to the outgoing beampipe
+
+    Added "rotation" parameter to LumiCal to allow arbitrary rotation
+
+    Added "allign_to_pipeout" boolean parameter to BeamCal. 
+        Does NOT allow arbitrary rotation. The BeamCal is either concentric 
+        about the z-axis, or the outgoing beampipe. This is because, no matter
+        how the BeamCal is rotated, the two holes going through it MUST align 
+        to the beampipes. Allowing arbitrary rotation, while possible, would
+        have been much more complicated to implement, as it would require both
+        the arbitrary angle and beam crossing to be taken into account for 
+        these holes.
+
+    Added "allign_to_pipeout" parameter to 'ForwardLowZ' (Polyethylene mask).
+        Functions same as the above 
+
+    All BeamPipe inserts (what goes in the BeamCal holes):
+        zhalf (half its length): 92.7 -> 87.5
+        z: 3042.7 -> 3352.5
+        x(+&-): 21.3 -> 23.47
+
+
+
+changes made to avoid collisions with other parts of the detector
+
+    SiTrackerEndcap, layer 4, innermost ring radius: 256.716 -> 258.716
+        changed to avoid collision with the LumiCal
+
+    BeamPipeLiner: modified to stop before the lumical instead of the tracking
+        region
+
+    Forward and Backward Vacuum: adjusted z position to avoid LumiCal
+
+    VXDcableZbackwardOuter: adjusted z position to avoid LumiCal
+    VXDcableZbackwardInner: adjusted z position to avoid LumiCal
+    VXDcableZforwardOuter: adjusted z position to avoid LumiCal
+    VXDcableZforwardInner: adjusted z position to avoid LumiCal
+
+
+
